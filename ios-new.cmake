@@ -4,7 +4,7 @@
 # custom configuration stuff
 
 set(TOOLCHAIN_ROOT "$ENV{THEOS}/toolchain/linux/iphone")
-set(SDK_ROOT "$ENV{THEOS}/sdks")
+set(SDKS_ROOT "$ENV{THEOS}/sdks")
 
 if (NOT DEFINED IOS_ARCH)
     set(IOS_ARCH armv7 arm64)
@@ -41,10 +41,10 @@ endif()
 #message(STATUS "${TOOLCHAIN_ROOT}")
 
 # find sdks
-if (NOT EXISTS ${SDK_ROOT})
+if (NOT EXISTS ${SDKS_ROOT})
   # we have some problems, search for xcode ones.
 else()
-  set(EXECUTE_FIND find ${SDK_ROOT})
+  set(EXECUTE_FIND find ${SDKS_ROOT})
   execute_process(COMMAND ${EXECUTE_FIND}
     OUTPUT_VARIABLE SDK_VERSION
     ERROR_QUIET
@@ -54,10 +54,14 @@ else()
   message(STATUS "Building with SDK version ${SDK_VERSION}")
 endif()
 
+set(SDK_ROOT "${SDKS_ROOT}/${SDK_VERSION}")
+
 set(CMAKE_SYSROOT ${SDK_ROOT})
+set(CMAKE_OSX_SYSROOT ${SDK_ROOT})
+
 set(UNIX TRUE)
 #set(APPLE TRUE)
-set(IOS TRUE)
+#set(IOS TRUE)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "" CACHE STRING
   "Must be empty for iOS builds." FORCE)
@@ -82,10 +86,10 @@ set(CMAKE_CXX_OSX_CURRENT_VERSION_FLAG "${CMAKE_C_OSX_CURRENT_VERSION_FLAG}")
 
 set(IOS_DEPLOYMENT_TARGET "${SDK_VERSION}" CACHE STRING "Minimum iOS version to build for." )
 
-set(IOS_PLATFORM_VERSION_FLAGS "-mios-version-min=5.0") #TODO variable here
+set(IOS_PLATFORM_VERSION_FLAGS "-mios-version-min=6.0") #TODO variable here
 
-set(CMAKE_C_FLAGS "${IOS_PLATFORM_VERSION_FLAGS} -fobjc-abi-version=2 -fobjc-arc ${CMAKE_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${IOS_PLATFORM_VERSION_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden -fobjc-abi-version=2 -fobjc-arc ${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${IOS_PLATFORM_VERSION_FLAGS} -fobjc-abi-version=2 -isysroot ${SDK_ROOT} -fobjc-arc ${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${IOS_PLATFORM_VERSION_FLAGS} -fvisibility=hidden -isysroot ${SDK_ROOT} -fvisibility-inlines-hidden -fobjc-abi-version=2 -fobjc-arc ${CMAKE_CXX_FLAGS}")
 
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -O3 -fomit-frame-pointer -ffast-math ${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_C_LINK_FLAGS "${IOS_PLATFORM_VERSION_FLAGS} -Wl,-search_paths_first ${CMAKE_C_LINK_FLAGS}")
@@ -119,9 +123,9 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".so" ".a")
 # CMakeFindBinUtils.cmake (because it isn't rerun) hardcode
 # CMAKE_INSTALL_NAME_TOOL here to install_name_tool, so it behaves as it did
 # before, Alex.
-if (NOT DEFINED CMAKE_INSTALL_NAME_TOOL)
-  find_program(CMAKE_INSTALL_NAME_TOOL install_name_tool)
-endif (NOT DEFINED CMAKE_INSTALL_NAME_TOOL)
+# if (NOT DEFINED CMAKE_INSTALL_NAME_TOOL)
+#   find_program(CMAKE_INSTALL_NAME_TOOL install_name_tool)
+# endif (NOT DEFINED CMAKE_INSTALL_NAME_TOOL)
 
 set(CMAKE_FIND_FRAMEWORK FIRST)
 
